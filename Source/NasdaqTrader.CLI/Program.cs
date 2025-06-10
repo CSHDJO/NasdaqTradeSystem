@@ -26,7 +26,7 @@ if (!int.TryParse(amountOfStocksAsText, out amountOfStock))
     amountOfStock = 100;
 }
 
-bool runSilent = args.Any(b => b.Equals("-s"));
+bool runSilent = args.Any(b => b.Equals("-silent"));
 
 int timeLimit = 10000;
 string timeLimitAsText = "";
