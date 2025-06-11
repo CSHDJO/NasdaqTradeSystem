@@ -11,12 +11,15 @@ public class SimulationResults
     public DateOnly EndDate { get; set; }
     public decimal StartCash { get; set; }
     public Dictionary<ITraderBot, List<ITrade>> Trades { get; set; }
+    public string GameName { get; set; }
 }
 
 public class CompanyResult
 {
     public string Name { get; set; } = "";
-    public string Cash { get; set; }
+    public decimal Cash { get; set; }
     public IHolding[] Holdings { get; set; } = Array.Empty<IHolding>();
     public DateOnly OnDate { get; set; }
+    public decimal HoldingsValue { get; set; }
+    public decimal Total { get; set; }
 }

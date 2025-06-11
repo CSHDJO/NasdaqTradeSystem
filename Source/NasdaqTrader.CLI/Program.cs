@@ -1,12 +1,13 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
 using System.Diagnostics;
+using System.Globalization;
 using NasdaqTrader.Bot.Core;
 using NasdaqTraderSystem.Core;
 using NasdaqTraderSystem.Html;
 
 var html = new HtmlGenerator();
-
+CultureInfo.CurrentCulture = new CultureInfo("en-US");
 var parameters = Environment.GetCommandLineArgs();
 
 string dataFolder = "";
@@ -85,16 +86,10 @@ foreach (var player in traderSystemSimulation.Players)
     playerTasks[player].Wait();
 }
 
-Console.WriteLine("Results:");
-foreach (var player in traderSystemSimulation.Players)
-{
-    Console.WriteLine(
-        $"{player.CompanyName}    -   ${traderSystemSimulation.BankAccounts[player] + traderSystemSimulation.Holdings[player].GetCurrentValue(traderSystemSimulation.EndDate):0.00}");
-}
 
 Console.WriteLine("Generating html results");
 html.GenerateFiles(AppContext.BaseDirectory + "Results\\", traderSystemSimulation);
-
+Console.WriteLine("Done");
 
 if (!runSilent)
 {

@@ -22,6 +22,7 @@
     <div class="row">
 
         <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
+            <a href="../index.html">Back</a>
             <h1>Resultaten {{StartDate}} tot {{EndDate}} gespeeld op {{RunAt}}</h1>
             <img src="results.png" class="img-fluid">
             <div class="table-responsive small">
@@ -29,6 +30,8 @@
                     <thead>
                     <tr>
                         <th scope="col">Company</th>
+                        <th scope="col">Cash</th>
+                        <th scope="col">Holdings</th>
                         <th scope="col">Total worth</th>
                     </tr>
                     </thead>
@@ -37,6 +40,8 @@
                     <tr scope="row">
                         <td><a href="{{Name}}.html">{{Name}}</a></td>
                         <td>{{Cash}}</td>
+                        <td>{{HoldingsValue}}</td>
+                        <td>{{Total}}</td>
                     </tr>
                     {{/Companies}}
                     </tbody>
