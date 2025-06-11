@@ -69,7 +69,7 @@ public class TraderSystemContext : ITraderSystemContext
         return _simulation.ProcessTrade(traderBot, trade, this);
     }
 
-    public IHolding GetHoldings(ITraderBot traderBot, IStockListing listing)
+    public IHolding GetHolding(ITraderBot traderBot, IStockListing listing)
     {
         var holding = _simulation.Holdings[traderBot].FirstOrDefault(b => b.Listing == listing);
         if (holding == null)
@@ -82,6 +82,11 @@ public class TraderSystemContext : ITraderSystemContext
             _simulation.Holdings[traderBot].Add(holding);
         }
         return holding;
+    }
+
+    public IHolding[] GetHoldings(ITraderBot traderBot)
+    {
+        return _simulation.Holdings[traderBot].ToArray();
     }
 }
 

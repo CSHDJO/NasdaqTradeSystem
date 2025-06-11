@@ -15,5 +15,6 @@ public interface ITraderSystemContext
     int GetTradesLeftForToday(ITraderBot traderBot);
     bool BuyStock(ITraderBot traderBot,IStockListing listing, int amount);
     bool SellStock(ITraderBot traderBot, IStockListing listing, int amount);
-    IHolding GetHoldings(ITraderBot traderBot, IStockListing listing);
+    IHolding GetHolding(ITraderBot traderBot, IStockListing listing);
+    IHolding[] GetHoldings(ITraderBot traderBot);
 }
