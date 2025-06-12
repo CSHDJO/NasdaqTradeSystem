@@ -32,6 +32,6 @@ public class DeJongeTrader : ITraderBot
             return;
         }
 
-        systemContext.BuyStock(this, tradeListing, (int)(systemContext.GetCurrentCash(this) / pricePoint.Price));
+        systemContext.BuyStock(this, tradeListing, Math.Min(1000, (int)(systemContext.GetCurrentCash(this) / pricePoint.Price)));
     }
 }
