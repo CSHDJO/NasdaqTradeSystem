@@ -3,12 +3,8 @@ name: Build .NET Projects in Bots Subfolders
 on:
   push:
     branches: [ "master" ]
-    paths: 
-      - 'Bots/**'
   pull_request:
     branches: [ "master" ]
-    paths:
-      - 'Bots/**'
 
 jobs:
   build:
