@@ -14,16 +14,24 @@ public class DeJongeTrader : ITraderBot
         {
             systemContext.SellStock(this, holding.Listing, holding.Amount);
         }
-        
-        var tradeListings = listings
-            .OrderByDescending(c =>
-                c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate)?.Price ?? decimal.MaxValue -
-                c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate.AddDays(1))?.Price ?? decimal.MaxValue).Take(2);
 
-        foreach (var listing in tradeListings)
+        var tradeListing = listings
+            .MaxBy(c =>
+                c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate)?.Price ?? decimal.MaxValue -
+                c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate.AddDays(1))?.Price ??
+                decimal.MaxValue);
+
+        if (tradeListing == null)
         {
-            systemContext.BuyStock(this, listing, 5);
+            return;
         }
 
+        var pricePoint = tradeListing.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate);
+        if (pricePoint == null)
+        {
+            return;
+        }
+
+        systemContext.BuyStock(this, tradeListing, (int)(systemContext.GetCurrentCash(this) / pricePoint.Price));
     }
 }
