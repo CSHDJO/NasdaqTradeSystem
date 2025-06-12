@@ -16,7 +16,7 @@ public class DeJongeTrader : ITraderBot
         }
         
         var tradeListings = listings
-            .OrderBy(c =>
+            .OrderByDescending(c =>
                 c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate)?.Price ?? decimal.MaxValue -
                 c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate.AddDays(1))?.Price ?? decimal.MaxValue).Take(2);
 
