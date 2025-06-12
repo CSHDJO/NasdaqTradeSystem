@@ -29,7 +29,7 @@ Per dag kan je maar 5 transacties doen(verkopen of kopen).
 
 Aan het einde van spel word de waarde bepaald door cash + (aandelen * waarde) te doen. Je hoeft dus niet alles aan het einde te verkopen.
 
-Het spel loopt voor 5 seconden voor iedereen, als je niet binnen 5 seconden afgerond hebt stopt het spel gewoon. Je wordt wel meegenomen in de ranking, maar je houdt de aandelen die je had toen het spel stopte.
+Het spel loopt voor 2,5 seconden voor iedereen, als je niet binnen 2,5 seconden afgerond hebt stopt het spel gewoon. Je wordt wel meegenomen in de ranking, maar je houdt de aandelen die je had toen het spel stopte.
 Het kan zijn dat dit tijdslimiet nog wordt opgerekt.
 
 Het spel loopt per speler individueel er kan dus niet naar elkaar worden gekeken of op elkaar worden gereageerd.

@@ -30,7 +30,7 @@ Write-Host "Run the game"
 $exePath = Resolve-Path "$PSScriptRoot/../Build/NasdaqTrader.CLI.exe";
 
 $dataFolderPath = Resolve-Path "$PSScriptRoot/../Data";
-Start-Process -FilePath $exePath -ArgumentList "-t 10000 -d $dataFolderPath -n 100 -t 10000 -silent -s 100000" -NoNewWindow -Wait
+Start-Process -FilePath $exePath -ArgumentList "-d $dataFolderPath -n 100 -t 2500 -silent -s 1000" -NoNewWindow -Wait
 
 Set-Location -Path "$PSScriptRoot/../Build/results"
 
