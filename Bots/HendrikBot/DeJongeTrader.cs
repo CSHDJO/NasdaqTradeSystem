@@ -16,6 +16,7 @@ public class DeJongeTrader : ITraderBot
         }
 
         var tradeListing = listings
+            .Where(c=>  c.PricePoints.Any(p => p.Date == systemContext.CurrentDate) &&  c.PricePoints.Any(p => p.Date == systemContext.CurrentDate.AddDays(1)))
             .MaxBy(c =>
                 c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate)?.Price ?? decimal.MaxValue -
                 c.PricePoints.FirstOrDefault(p => p.Date == systemContext.CurrentDate.AddDays(1))?.Price ??
