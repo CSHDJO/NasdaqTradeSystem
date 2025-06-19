@@ -132,7 +132,3 @@ $RECYCLE.BIN/
 .DS_Store
 
 _NCrunch*
-/Bots/AleixBot/.vs
-/Bots/ExampleTraderBot/.vs/ExampleTraderBot
-/Source/.vs
-/Build/Results
