@@ -1,4 +1,5 @@
 ﻿using System.Collections.ObjectModel;
+using System.Diagnostics;
 using NasdaqTrader.Bot.Core;
 
 namespace NasdaqTraderSystem.Core;
@@ -50,7 +51,7 @@ public class TraderSystemContext : ITraderSystemContext
         trade.Amount = amount;
         trade.ExecutedOn = CurrentDate;
         trade.AtPrice = currentPrice;
-        return _simulation.ProcessTrade(traderBot, trade);
+        return _simulation.ProcessTrade(traderBot, trade, this);
     }
 
     public bool SellStock(ITraderBot traderBot, IStockListing listing, int amount)
@@ -65,10 +66,10 @@ public class TraderSystemContext : ITraderSystemContext
         trade.Amount = -amount;
         trade.ExecutedOn = CurrentDate;
         trade.AtPrice = currentPrice;
-        return _simulation.ProcessTrade(traderBot, trade);
+        return _simulation.ProcessTrade(traderBot, trade, this);
     }
 
-    public IHolding GetHoldings(ITraderBot traderBot, IStockListing listing)
+    public IHolding GetHolding(ITraderBot traderBot, IStockListing listing)
     {
         var holding = _simulation.Holdings[traderBot].FirstOrDefault(b => b.Listing == listing);
         if (holding == null)
@@ -81,6 +82,11 @@ public class TraderSystemContext : ITraderSystemContext
             _simulation.Holdings[traderBot].Add(holding);
         }
         return holding;
+    }
+
+    public IHolding[] GetHoldings(ITraderBot traderBot)
+    {
+        return _simulation.Holdings[traderBot].ToArray();
     }
 }
 

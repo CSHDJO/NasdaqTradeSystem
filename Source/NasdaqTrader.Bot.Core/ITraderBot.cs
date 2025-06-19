@@ -2,6 +2,6 @@
 
 public interface ITraderBot
 {
-    void DoTurn(ITraderSystemContext systemContext);
+    Task DoTurn(ITraderSystemContext systemContext);
     string CompanyName { get; }
 }

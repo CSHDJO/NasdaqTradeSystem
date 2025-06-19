@@ -16,5 +16,7 @@ public class HistoricCompanyRecord
     }
 
     public decimal TotalHolding => Holdings.Sum(c =>
-        c.Amount * c.Listing.PricePoints.FirstOrDefault(c => c.Date == OnDate)?.Price ?? 0m);
+        c.Amount * c.Listing.PricePoints.FirstOrDefault(c => c.Date == OnDate)?.Price ??
+        c.Listing.PricePoints.MinBy(
+            c => c.Date.ToDateTime(new TimeOnly(12, 0)) - OnDate.ToDateTime(new TimeOnly(12, 0))).Price);
 }

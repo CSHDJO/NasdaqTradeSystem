@@ -6,7 +6,7 @@ public class ExampleTrader : ITraderBot
 {
     public string CompanyName => "Stupid Investments";
 
-    public void DoTurn(ITraderSystemContext systemContext)
+    public async Task DoTurn(ITraderSystemContext systemContext)
     {
         var listings = systemContext.GetListings();
         var cash = systemContext.GetCurrentCash(this);

@@ -1,11 +1,13 @@
 ﻿// See https://aka.ms/new-console-template for more information
 
+using System.Diagnostics;
+using System.Globalization;
 using NasdaqTrader.Bot.Core;
 using NasdaqTraderSystem.Core;
 using NasdaqTraderSystem.Html;
 
 var html = new HtmlGenerator();
-
+CultureInfo.CurrentCulture = new CultureInfo("en-US");
 var parameters = Environment.GetCommandLineArgs();
 
 string dataFolder = "";
@@ -25,13 +27,24 @@ if (!int.TryParse(amountOfStocksAsText, out amountOfStock))
     amountOfStock = 100;
 }
 
-int startingCash = 100000;
+bool runSilent = args.Any(b => b.Equals("-silent"));
+
+int timeLimit = 10000;
+string timeLimitAsText = "";
+timeLimitAsText = GetParameter("-t", $"Tijdlimiet voor totale run (default 2500)",
+    parameters);
+if (!int.TryParse(timeLimitAsText, out timeLimit))
+{
+    timeLimit = 2500;
+}
+
+int startingCash = 1000;
 string startingCashAsText = "";
-startingCashAsText = GetParameter("-s", $"Start bedrag(default 100.000)",
+startingCashAsText = GetParameter("-s", $"Start bedrag(default 1000)",
     parameters);
 if (!int.TryParse(startingCashAsText, out startingCash))
 {
-    startingCash = 100000;
+    startingCash = 1000;
 }
 
 BotLoader botLoader = new BotLoader();
@@ -40,28 +53,53 @@ var botTypes = new Dictionary<string, Type>();
 botLoader.DetermineBots(AppContext.BaseDirectory + "Bots", botTypes);
 
 var stocksLoader = new StockLoader(dataFolder, amountOfStock);
-
+var year = new Random().Next(2021, 2024);
 TraderSystemSimulation traderSystemSimulation = new TraderSystemSimulation(
     botTypes.Values.Select(b => (ITraderBot)Activator.CreateInstance(b)).ToList(),
-    startingCash, new DateOnly(2021, 01, 01),
-    new DateOnly(2024, 12, 31), 5,
+    startingCash, new DateOnly(year, 01, 01),
+    new DateOnly(year, 12, 31), 5,
     stocksLoader);
 
-while (traderSystemSimulation.DoSimulationStep())
-{
-}
-
-Console.WriteLine("Results:");
+Dictionary<ITraderBot, Task> playerTasks = new();
 foreach (var player in traderSystemSimulation.Players)
 {
-    Console.WriteLine(
-        $"{player.CompanyName}    -   ${traderSystemSimulation.BankAccounts[player] + traderSystemSimulation.Holdings[player].GetCurrentValue(traderSystemSimulation.GetContext()):0.00}");
+    playerTasks.Add(player,
+        Task.Run(async () =>
+        {
+            while (await traderSystemSimulation.DoSimulationStep(player))
+            {
+            }
+        }));
 }
 
+await Task.Delay(timeLimit);
+foreach (var player in traderSystemSimulation.Players)
+{
+    if (playerTasks[player].IsCompleted == false)
+    {
+        traderSystemSimulation.DidNotFinished.Add(player);
+    }
+}
+
+foreach (var player in traderSystemSimulation.Players)
+{
+    playerTasks[player].Wait();
+}
+
+
+Console.WriteLine("Generating html results");
 html.GenerateFiles(AppContext.BaseDirectory + "Results\\", traderSystemSimulation);
+Console.WriteLine("Done");
 
-
-
+if (!runSilent)
+{
+    var p = new Process();
+    p.StartInfo = new ProcessStartInfo(AppContext.BaseDirectory + "Results\\index.html")
+    {
+        UseShellExecute = true
+    };
+    p.Start();
+}
 
 string GetParameter(string parameter, string question, string[] arguments)
 {

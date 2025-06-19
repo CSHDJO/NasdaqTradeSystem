@@ -1,95 +1,93 @@
-﻿using NasdaqTrader.Bot.Core;
+﻿using System.Collections.Concurrent;
+using NasdaqTrader.Bot.Core;
 
 namespace NasdaqTraderSystem.Core;
 
 public class TraderSystemSimulation
 {
-    public List<HistoricCompanyRecord> Records = new();
-    
+    public BlockingCollection<HistoricCompanyRecord> Records = new();
+
     public List<ITraderBot> Players { get; set; } = new();
 
     public List<IStockListing> StockListings { get; set; } = new();
-    public Dictionary<ITraderBot, decimal> BankAccounts { get; set; } = new();
-    public Dictionary<ITraderBot, List<IHolding>> Holdings { get; set; } = new();
-    public Dictionary<ITraderBot, List<ITrade>> Trades { get; set; } = new();
+    public ConcurrentDictionary<ITraderBot, decimal> BankAccounts { get; set; } = new();
+    public ConcurrentDictionary<ITraderBot, List<IHolding>> Holdings { get; set; } = new();
+    public ConcurrentDictionary<ITraderBot, List<ITrade>> Trades { get; set; } = new();
+    public ConcurrentDictionary<ITraderBot, TraderSystemContext> Contexts { get; set; } = new();
+    public DateOnly StartDate { get; set; }
+    public DateOnly EndDate { get; set; }
+    public BlockingCollection<ITraderBot> DidNotFinished { get; set; }
 
-
-    private TraderSystemContext _systemContext;
 
     public TraderSystemSimulation(List<ITraderBot> players, decimal startingCash,
         DateOnly from, DateOnly to,
         int amountOfTradesPerDay, StockLoader stocksLoader)
     {
+        DidNotFinished = new();
         Players = players;
         foreach (var player in Players)
         {
-            BankAccounts.Add(player, startingCash);
-            Holdings.Add(player, new());
-            Trades.Add(player, new());
+            BankAccounts.TryAdd(player, startingCash);
+            Holdings.TryAdd(player, new());
+            Trades.TryAdd(player, new());
+
+            var systemContext = new TraderSystemContext(this);
+            systemContext.CurrentDate = from;
+            systemContext.StartDate = from;
+            systemContext.EndDate = to;
+            systemContext.AmountOfTradesPerDay = amountOfTradesPerDay;
+            Contexts.TryAdd(player, systemContext);
         }
 
-        _systemContext = new TraderSystemContext(this);
-        _systemContext.CurrentDate = from;
-        _systemContext.StartDate = from;
-        _systemContext.EndDate = to;
-        _systemContext.AmountOfTradesPerDay = amountOfTradesPerDay;
+        StartDate = from;
+        EndDate = to;
         StockListings = stocksLoader.GetListings(from, to);
         stocksLoader.Dispose();
     }
 
-    public bool DoSimulationStep()
+    public async Task<bool> DoSimulationStep(ITraderBot playerBot)
     {
-        if (_systemContext.CurrentDate >= _systemContext.EndDate)
+        if (DidNotFinished.Contains(playerBot))
         {
             return false;
         }
-     
-        _systemContext.CurrentDate = _systemContext.CurrentDate.AddDays(1);
-        while (_systemContext.CurrentDate.DayOfWeek == DayOfWeek.Saturday ||
-               _systemContext.CurrentDate.DayOfWeek == DayOfWeek.Sunday || _systemContext.CurrentDate.IsFederalHoliday())
+        TraderSystemContext systemContext = Contexts[playerBot];
+        if (systemContext.CurrentDate >= systemContext.EndDate)
         {
-            _systemContext.CurrentDate = _systemContext.CurrentDate.AddDays(1);
+            return false;
         }
-       
-        foreach (var player in Players)
+
+        systemContext.CurrentDate = systemContext.CurrentDate.AddDays(1);
+        while (systemContext.CurrentDate.DayOfWeek == DayOfWeek.Saturday ||
+               systemContext.CurrentDate.DayOfWeek == DayOfWeek.Sunday || systemContext.CurrentDate.IsFederalHoliday())
         {
-            try
-            {
-                player.DoTurn(_systemContext);
-            }
-            catch (Exception e)
-            {
-            }
+            systemContext.CurrentDate = systemContext.CurrentDate.AddDays(1);
         }
-        
-        SaveRecordForDate();
+
+        try
+        {
+            await playerBot.DoTurn(systemContext);
+        }
+        catch (Exception e)
+        {
+        }
+
+        SaveRecordForDate(systemContext, playerBot);
         return true;
     }
 
-    private void SaveRecordForDate()
+    private void SaveRecordForDate(TraderSystemContext context, ITraderBot player)
     {
-        foreach (var player in Players)
+        Records.Add(new HistoricCompanyRecord()
         {
-            Records.Add(new HistoricCompanyRecord()
-            {
-                Name= player.CompanyName,
-                OnDate = _systemContext.CurrentDate,
-                Holdings = Holdings[player].OfType<Holding>().Select(c=> c.Copy()).ToArray(),
-                Cash = BankAccounts[player],
-                Transactions= Trades[player].Where(b=> b.ExecutedOn == _systemContext.CurrentDate).ToArray()
-            });
-        }
+            Name = player.CompanyName,
+            OnDate = context.CurrentDate,
+            Holdings = Holdings[player].OfType<Holding>().Select(c => c.Copy()).ToArray(),
+            Cash = BankAccounts[player],
+            Transactions = Trades[player].Where(b => b.ExecutedOn == context.CurrentDate).ToArray()
+        });
     }
 
-    public DateOnly GetCurrentDate()
-    {
-        return _systemContext.CurrentDate;
-    }
-
-    public ITraderSystemContext GetContext()
-    {
-        return _systemContext;
-    }
 
     public decimal GetPriceOnDay(IStockListing listing, DateOnly currentDate)
     {
@@ -98,14 +96,14 @@ public class TraderSystemSimulation
             .Price ?? 0.0m;
     }
 
-    public bool ProcessTrade(ITraderBot traderBot, Trade trade)
+    public bool ProcessTrade(ITraderBot traderBot, Trade trade, TraderSystemContext context)
     {
-        if (Trades[traderBot].Count(c => c.ExecutedOn == GetCurrentDate()) >= _systemContext.AmountOfTradesPerDay)
+        if (Trades[traderBot].Count(c => c.ExecutedOn == context.CurrentDate) >= context.AmountOfTradesPerDay)
         {
             return false;
         }
 
-        if (trade.Listing.PricePoints.All(c => c.Date != GetCurrentDate()))
+        if (trade.Listing.PricePoints.All(c => c.Date != context.CurrentDate))
         {
             return false;
         }
@@ -127,6 +125,11 @@ public class TraderSystemSimulation
             Holdings[traderBot].Add(holding);
         }
 
+        if (holding.Amount + trade.Amount > 1000)
+        {
+            return false;
+        }
+        
         if (trade.Amount < 0
             && holding.Amount + trade.Amount < 0)
         {
@@ -138,6 +141,4 @@ public class TraderSystemSimulation
         Trades[traderBot].Add(trade);
         return false;
     }
-
-  
 }
