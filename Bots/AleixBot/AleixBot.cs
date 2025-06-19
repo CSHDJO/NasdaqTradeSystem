@@ -6,7 +6,7 @@ public class AleixBot : ITraderBot
 {
     public string CompanyName => "Beginner Investments";
 
-    public void DoTurn(ITraderSystemContext systemContext)
+    public async Task DoTurn(ITraderSystemContext systemContext)
     {
         var listings = systemContext.GetListings();
         var cash = systemContext.GetCurrentCash(this);
