@@ -36,6 +36,13 @@ Het kan zijn dat dit tijdslimiet nog wordt opgerekt.
 
 Het spel loopt per speler individueel er kan dus niet naar elkaar worden gekeken of op elkaar worden gereageerd.
 
+### Bonus regeling
+Als je een UI weet te maken die het spel kan afspelen aan het eind krijg je +2% bonus bovenop je eindresultaat per game.
+Als je een UI weet te maken waarbij je zelf kan handelen krijg je +5% bonus bovenop je eindresultaat per game.
+Voor de finale moet je met een Bot meedoen, je kan dan niet zelf handelen.
+
+Je mag hiervoor de source aanpassen, maar spel moet nog wel normaal kunnen lopen.
+
 ## Hoe doe ik mee?
 Maak een fork van dit project op github [How to fork](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo) 
 
