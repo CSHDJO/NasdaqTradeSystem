@@ -68,7 +68,7 @@ public class StockLoader
             listings.Add(stockListing);
         }
 
-        string[][] tickerInfo = File.ReadAllText(_dataFolder + "\\Tickers.txt").Split(Environment.NewLine)
+        string[][] tickerInfo = File.ReadAllText(Path.Combine(_dataFolder, "Tickers.txt")).Split(Environment.NewLine)
             .Select(c => c.Split('|')).ToArray();
         foreach (var info in tickerInfo)
         {

@@ -88,13 +88,13 @@ foreach (var player in traderSystemSimulation.Players)
 
 
 Console.WriteLine("Generating html results");
-html.GenerateFiles(AppContext.BaseDirectory + "Results\\", traderSystemSimulation);
+html.GenerateFiles(Path.Combine(AppContext.BaseDirectory, "Results"), traderSystemSimulation);
 Console.WriteLine("Done");
 
 if (!runSilent)
 {
     var p = new Process();
-    p.StartInfo = new ProcessStartInfo(AppContext.BaseDirectory + "Results\\index.html")
+    p.StartInfo = new ProcessStartInfo(Path.Combine(AppContext.BaseDirectory, "Results", "index.html"))
     {
         UseShellExecute = true
     };

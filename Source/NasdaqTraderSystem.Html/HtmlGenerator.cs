@@ -70,8 +70,8 @@ public class HtmlGenerator
             }).ToArray();
 
         tasks.AddRange(GenerateCompaniesPlot(baseDirectory, traderSystemSimulation, gameDate));
-        Directory.CreateDirectory($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\");
-        File.WriteAllText($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\GameResult.html", GetGameHtml(results));
+        Directory.CreateDirectory(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}"));
+        File.WriteAllText(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "GameResult.html"), GetGameHtml(results));
 
         var files = Directory.GetDirectories(baseDirectory).Reverse().ToArray();
         GenerateIndex(baseDirectory, files);
@@ -96,7 +96,7 @@ public class HtmlGenerator
         var context = new IndexContext();
         context.Games = files.Select(b => new IndexGame()
         {
-            GameHTML = Path.GetFileNameWithoutExtension(b) + "\\GameResult.html",
+            GameHTML = Path.Combine(Path.GetFileNameWithoutExtension(b), "GameResult.html"),
             Name = Path.GetFileNameWithoutExtension(b)
         }).ToArray();
         var indexTemplate = GetTemplate("Index.html");
@@ -104,14 +104,14 @@ public class HtmlGenerator
         var template = Handlebars.Compile(indexTemplate);
 
         var result = template(context);
-        File.WriteAllText($"{baseDirectory}index.html", result);
+        File.WriteAllText(Path.Combine(baseDirectory, "index.html"), result);
     }
 
     private List<Task> GenerateStockPages(string baseDirectory, TraderSystemSimulation traderSystemSimulation,
         DateTime gameDate, SimulationResults results)
     {
         List<Task> tasks = new List<Task>();
-        Directory.CreateDirectory($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\stocks\\");
+        Directory.CreateDirectory(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "stocks"));
         foreach (var listing in results.Listings)
         {
             tasks.Add(Task.Run(() =>
@@ -123,11 +123,11 @@ public class HtmlGenerator
                     listing.PricePoints.Select(c => c.Price).ToArray());
                 scatter.LegendText = listing.Name;
                 listingsPlot.Axes.DateTimeTicksBottom();
-                listingsPlot.SavePng($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\stocks\\{listing.Ticker}.png", 1920,
+                listingsPlot.SavePng(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "stocks", $"{listing.Ticker}.png"), 1920,
                     1080);
 
-                Directory.CreateDirectory($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\");
-                File.WriteAllText($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\stocks\\{listing.Ticker}.html",
+                Directory.CreateDirectory(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}"));
+                File.WriteAllText(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "stocks", $"{listing.Ticker}.html"),
                     GetStockHtml(listing, results));
             }));
         }
@@ -189,17 +189,17 @@ public class HtmlGenerator
                 playerPlotHoldingScatter.LegendText = "Holdings";
 
                 playerPlot.Axes.DateTimeTicksBottom();
-                playerPlot.SavePng($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\{player.CompanyName}.png", 1920,
+                playerPlot.SavePng(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", $"{player.CompanyName}.png"), 1920,
                     1080);
 
                 string html = GenerateHtmlForPlayer(player, baseDirectory, traderSystemSimulation,
                     gameDate);
-                File.WriteAllText($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\{player.CompanyName}.html", html);
+                File.WriteAllText(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "{player.CompanyName}.html"), html);
             }));
         }
 
         companiesPlot.Axes.DateTimeTicksBottom();
-        companiesPlot.SavePng($"{baseDirectory}{gameDate:dd-MM-yyyy-HH-mm}\\results.png", 1920,
+        companiesPlot.SavePng(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "results.png"), 1920,
             1080);
         return tasks;
     }
