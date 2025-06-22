@@ -97,8 +97,9 @@ public class HtmlGenerator
         context.Games = files.Select(b => new IndexGame()
         {
             GameHTML = Path.Combine(Path.GetFileNameWithoutExtension(b), "GameResult.html"),
-            Name = Path.GetFileNameWithoutExtension(b)
-        }).ToArray();
+            Name = Path.GetFileNameWithoutExtension(b),
+            ExecutionTime = DateTime.ParseExact(Path.GetFileNameWithoutExtension(b), "dd-MM-yyyy-HH-mm", null)
+        }).OrderByDescending(g => g.ExecutionTime).ToArray();
         var indexTemplate = GetTemplate("Index.html");
 
         var template = Handlebars.Compile(indexTemplate);
@@ -152,7 +153,7 @@ public class HtmlGenerator
             {
                 Trade = c.d,
                 Player = c.CompanyName
-            }).OrderBy(c=> c.Trade.ExecutedOn).ToArray();
+            }).OrderBy(c => c.Trade.ExecutedOn).ToArray();
 
         var result = _stockTemplate(context);
         return result;
@@ -246,6 +247,7 @@ internal class IndexGame
 {
     public string GameHTML { get; set; }
     public string Name { get; set; }
+    public DateTime ExecutionTime { get; set; }
 }
 
 internal class IndexContext
