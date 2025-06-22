@@ -139,6 +139,6 @@ public class TraderSystemSimulation
         holding.Amount += trade.Amount;
         BankAccounts[traderBot] -= (trade.Amount * trade.AtPrice);
         Trades[traderBot].Add(trade);
-        return false;
+        return true;
     }
 }
