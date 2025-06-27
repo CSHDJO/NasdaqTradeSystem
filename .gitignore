@@ -7,6 +7,8 @@
 ## CUSTOM ADDED FOR NASDAQ TRADE SYSTEM
 ##################################
 [Bb]uild
+# Keep git submodule pointing to hosted results page
+!Build/Results/
 .idea/
 sql/
 *_i.h
