@@ -25,5 +25,17 @@ jobs:
         working-directory: Source
 
       - name: Build solution
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --no-restore --configuration Debug
         working-directory: Source
+
+      - name: exclude results directory
+        run: |
+          rm -rf Builld/Results
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-artifact
+          path: |
+            Build/
+          if-no-files-found: error
