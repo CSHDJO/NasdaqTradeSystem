@@ -13,7 +13,9 @@
 x64/
 [Bb]in/
 [Oo]bj/
-[Bb]uild/[Bb]ots
+
+[Bb]uild/*
+![Bbuild]/Results/
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
