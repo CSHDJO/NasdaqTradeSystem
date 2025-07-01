@@ -17,13 +17,13 @@ public class ElonTraderBot : ITraderBot
             {
                 var holding = systemContext.GetHolding(this, listing);
                 systemContext.SellStock(this, holding.Listing, holding.Amount);
-                if (systemContext.GetTradesLeftForToday(this) >= 0) break;
+                if (systemContext.GetTradesLeftForToday(this) <= 0) break;
             }
 
             sellSchedule.Remove(systemContext.CurrentDate);
         }
 
-        if (systemContext.GetTradesLeftForToday(this) >= 0) return;
+        if (systemContext.GetTradesLeftForToday(this) <= 0) return;
 
         List<(IStockListing stock, DateOnly sellDay, decimal profitPerShare)> candidates = [];
 
@@ -78,7 +78,7 @@ public class ElonTraderBot : ITraderBot
 
                 scheduledListings.Add(stock);
 
-                if (systemContext.GetTradesLeftForToday(this) >= 0) return;
+                if (systemContext.GetTradesLeftForToday(this) <= 0) return;
             }
         }
     }
