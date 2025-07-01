@@ -3,6 +3,7 @@ set -e
 
 OWNER="xunafay"
 REPO="NasdaqTradeSystem"
+BRANCH="master"
 ARTIFACT_NAME="build-artifact"
 OUTPUT_DIR="./Build"
 COMMIT_LOOKAHEAD=3 # GitHub allows up to 60 unauthenticated requests/hour per IP, so we limit to 3 commits
@@ -15,15 +16,15 @@ fi
 CURRENT_COMMIT=$(git rev-parse HEAD)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
-if [ "$CURRENT_BRANCH" != "master" ]; then
-  BASE_COMMIT=$(git rev-parse origin/master)
+if [ "$CURRENT_BRANCH" != "$BRANCH" ]; then
+  BASE_COMMIT=$(git rev-parse origin/$BRANCH)
 else
   BASE_COMMIT=$CURRENT_COMMIT
 fi
 
 echo "Starting from commit: $BASE_COMMIT"
 
-COMMITS=$(git rev-list --reverse --topo-order "$BASE_COMMIT"..origin/master | head -n "$COMMIT_LOOKAHEAD")
+COMMITS=$(git rev-list --reverse --topo-order "$BASE_COMMIT"..origin/$BRANCH | head -n "$COMMIT_LOOKAHEAD")
 COMMITS="$BASE_COMMIT"$'\n'"$COMMITS"
 
 echo "Querying GitHub API for workflow runs"

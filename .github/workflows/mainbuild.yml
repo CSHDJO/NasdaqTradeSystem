@@ -28,9 +28,9 @@ jobs:
         run: dotnet build --no-restore --configuration Debug
         working-directory: Source
 
-      - name: exclude results directory
-        run: |
-          rm -rf Builld/Results
+      - name: Exclude Results directory
+        run: Remove-Item -Recurse -Force Build\Results
+        shell: pwsh
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
