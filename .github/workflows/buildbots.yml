@@ -19,6 +19,14 @@ jobs:
       with:
         dotnet-version: '8.0' # Change to your desired .NET version
 
+    - name: Restore dependencies
+      run: dotnet restore
+      working-directory: Source
+
+    - name: Build solution
+      run: dotnet build --no-restore --configuration Debug
+      working-directory: Source
+
     - name: Restore & Build all .NET projects in Bots subfolders
       run: |
         find Bots -type f -name "*.csproj" | while read csproj; do
