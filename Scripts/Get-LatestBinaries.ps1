@@ -1,61 +1,73 @@
-$ArtifactName = "build-artifact"
-$OutputDir = "Build"
-$CommitLookahead = 3 # GitHub allows up to 60 unauthenticated requests/hour per IP, so we limit to 3 commits
+$ErrorActionPreference = "Stop"
 
-$CurrentCommit = git rev-parse HEAD
-$CurrentBranch = git rev-parse --abbrev-ref HEAD
+$OWNER = "xunafay"
+$REPO = "NasdaqTradeSystem"
+$ARTIFACT_NAME = "build-artifact"
+$OUTPUT_DIR = "./Build"
+$COMMIT_LOOKAHEAD = 3
 
-if ($CurrentBranch -ne "master") {
-    $BaseCommit = git rev-parse origin/master
-} else {
-    $BaseCommit = $CurrentCommit
+if (-not (Get-Command "gh" -ErrorAction SilentlyContinue)) {
+    echo "GitHub CLI is not installed"
+    exit 1
 }
-Write-Host "Starting from commit: $BaseCommit"
 
-# Get up to $CommitLookahead commits forward from base
-$Commits = git rev-list --reverse --topo-order "$BaseCommit..origin/master" | Select-Object -First $CommitLookahead
-$Commits = @($BaseCommit) + $Commits
+$CURRENT_COMMIT = git rev-parse HEAD
+$CURRENT_BRANCH = git rev-parse --abbrev-ref HEAD
 
-Write-Host "Querying GitHub API for workflow runs..."
-$RunsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs?per_page=100"
-$RunsResponse = Invoke-WebRequest -Uri $RunsUrl -UseBasicParsing
-$RunsJson = $RunsResponse.Content | ConvertFrom-Json
+if ($CURRENT_BRANCH -ne "master") {
+    $BASE_COMMIT = git rev-parse origin/master
+} else {
+    $BASE_COMMIT = $CURRENT_COMMIT
+}
 
-foreach ($Commit in $Commits) {
-    Write-Host "Looking for workflow run for commit $Commit"
+echo "Starting from commit: $BASE_COMMIT"
 
-    $Run = $RunsJson.workflow_runs | Where-Object { $_.head_sha -eq $Commit -and $_.status -eq "completed" } | Select-Object -First 1
+$COMMITS = git rev-list --reverse --topo-order "$BASE_COMMIT"..origin/master | Select-Object -First $COMMIT_LOOKAHEAD
+$COMMITS = @($BASE_COMMIT) + $COMMITS
 
-    if ($Run) {
-        $RunId = $Run.id
-        Write-Host "Found run ID $RunId for $Commit"
+echo "Querying GitHub API for workflow runs"
 
-        $ArtifactsUrl = "https://api.github.com/repos/$Owner/$Repo/actions/runs/$RunId/artifacts"
-        $ArtifactsResponse = Invoke-WebRequest -Uri $ArtifactsUrl -UseBasicParsing
-        $ArtifactsJson = $ArtifactsResponse.Content | ConvertFrom-Json
+foreach ($COMMIT in $COMMITS) {
+    echo "Looking for workflow run for commit $COMMIT"
 
-        $Artifact = $ArtifactsJson.artifacts | Where-Object { $_.name -eq $ArtifactName } | Select-Object -First 1
+    $RUN_ID = gh run list `
+        --repo "$OWNER/$REPO" `
+        --limit 100 `
+        --json databaseId,headSha,name,status `
+        --jq ".[] | select(.headSha == `"$COMMIT`" and .name == `"Build main solution`" and .status == `"completed`") | .databaseId" |
+        Select-Object -First 1
 
-        if ($Artifact) {
-            $ArtifactId = $Artifact.id
-            Write-Host "Found artifact ID $ArtifactId for $ArtifactName"
+    if ($RUN_ID) {
+        echo "Found run ID $RUN_ID for $COMMIT"
 
-            if (-Not (Test-Path $OutputDir)) {
-                New-Item -ItemType Directory -Path $OutputDir | Out-Null
+        $ARTIFACTS_JSON = gh api repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts | ConvertFrom-Json
+        $ARTIFACT_ID = $ARTIFACTS_JSON.artifacts |
+            Where-Object { $_.name -eq $ARTIFACT_NAME } |
+            Select-Object -ExpandProperty id -First 1
+
+        if ($ARTIFACT_ID) {
+            echo "Found artifact ID $ARTIFACT_ID for $ARTIFACT_NAME"
+
+            if (-not (Test-Path $OUTPUT_DIR)) {
+                New-Item -ItemType Directory -Path $OUTPUT_DIR | Out-Null
             }
 
-            $ZipUrl = "https://api.github.com/repos/$Owner/$Repo/actions/artifacts/$ArtifactId/zip"
-            $ZipPath = "$OutputDir\artifact.zip"
+            Get-ChildItem -Path $OUTPUT_DIR -Force |
+                Where-Object { $_.Name -ne "Results" } |
+                Remove-Item -Recurse -Force
 
-            Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipPath -UseBasicParsing -Headers @{ "Accept" = "application/vnd.github.v3+json" }
+            gh run download $RUN_ID `
+                --repo "$OWNER/$REPO" `
+                --name "$ARTIFACT_NAME" `
+                --dir $OUTPUT_DIR
 
-            Write-Host "Downloaded artifact to $ZipPath"
-            Expand-Archive -Path $ZipPath -DestinationPath $OutputDir -Force
-            Write-Host "Extracted to $OutputDir"
+            echo "Downloaded artifact to $OUTPUT_DIR"
+            echo "Extracted to $OUTPUT_DIR"
             exit 0
         }
     }
 }
 
-Write-Host "No artifact found for the last $CommitLookahead commits from $BaseCommit"
+echo "No artifact found for the last $COMMIT_LOOKAHEAD commits from $BASE_COMMIT"
 exit 1
+

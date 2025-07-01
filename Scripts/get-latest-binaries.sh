@@ -7,6 +7,11 @@ ARTIFACT_NAME="build-artifact"
 OUTPUT_DIR="./Build"
 COMMIT_LOOKAHEAD=3 # GitHub allows up to 60 unauthenticated requests/hour per IP, so we limit to 3 commits
 
+if ! command -v gh >/dev/null 2>&1; then
+  echo "GitHub CLI is not installed"
+  exit 1
+fi
+
 CURRENT_COMMIT=$(git rev-parse HEAD)
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 
@@ -27,24 +32,34 @@ RUNS_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/actions/runs?per_
 for COMMIT in $COMMITS; do
   echo "Looking for workflow run for commit $COMMIT"
 
-  RUN_ID=$(echo "$RUNS_JSON" | grep -B10 "\"head_sha\": \"$COMMIT\"" | grep '"id":' | head -n1 | sed 's/[^0-9]*\([0-9]*\).*/\1/')
+  RUN_ID=$(gh run list \
+    --repo "$OWNER/$REPO" \
+    --limit 100 \
+    --json databaseId,headSha,name,status \
+    --jq ".[] | select(.headSha == \"$COMMIT\" and .name == \"Build main solution\" and .status == \"completed\") | .databaseId" | head -n 1)
+
 
   if [ -n "$RUN_ID" ]; then
     echo "Found run ID $RUN_ID for $COMMIT"
-    
-    ARTIFACTS=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts")
-    ARTIFACT_ID=$(echo "$ARTIFACTS_JSON" | grep -A3 "\"name\": \"$ARTIFACT_NAME\"" | grep '"id":' | head -n1 | sed 's/[^0-9]*\([0-9]*\).*/\1/')
 
-	if [ -n "$ARTIFACT_ID" ]; then
+    ARTIFACTS_JSON=$(curl -s "https://api.github.com/repos/$OWNER/$REPO/actions/runs/$RUN_ID/artifacts")
+    ARTIFACT_ID=$(echo "$ARTIFACTS_JSON" | jq -r \
+      --arg NAME "$ARTIFACT_NAME" \
+      '.artifacts[] | select(.name == $NAME) | .id' | head -n 1)
+
+    if [ -n "$ARTIFACT_ID" ]; then
       echo "Found artifact ID $ARTIFACT_ID for $ARTIFACT_NAME"
-      
-      mkdir -p "$OUTPUT_DIR"
-      curl -L "https://api.github.com/repos/$OWNER/$REPO/actions/artifacts/$ARTIFACT_ID/zip" \
-        -H "Accept: application/vnd.github.v3+json" \
-        -o "$OUTPUT_DIR/artifact.zip"
 
-      echo "Downloaded artifact to $OUTPUT_DIR/artifact.zip"
-      unzip -o "$OUTPUT_DIR/artifact.zip" -d "$OUTPUT_DIR"
+      mkdir -p "$OUTPUT_DIR"
+
+	  find "$OUTPUT_DIR" -mindepth 1 -not -name "Results" -exec rm -rf {} +
+
+      gh run download "$RUN_ID" \
+        --repo "$OWNER/$REPO" \
+        --name "$ARTIFACT_NAME" \
+        --dir "$OUTPUT_DIR"
+
+      echo "Downloaded artifact to $OUTPUT_DIR"
       echo "Extracted to $OUTPUT_DIR"
       exit 0
     fi
