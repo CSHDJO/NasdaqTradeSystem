@@ -36,7 +36,7 @@ public class ElonTraderBot : ITraderBot
             DateOnly bestSellDay = DateOnly.MinValue;
             decimal maxProfit = 0;
 
-            for (DateOnly futureDate = systemContext.CurrentDate.AddDays(1); futureDate < systemContext.EndDate; futureDate.AddDays(1))
+            for (DateOnly futureDate = systemContext.CurrentDate.AddDays(1); futureDate < systemContext.EndDate; futureDate = futureDate.AddDays(1))
             {
                 decimal futurePrice = stock.PricePoints.FirstOrDefault(pp => pp.Date == futureDate)?.Price ?? 0;
                 decimal profit = futurePrice - todaysPrice;
