@@ -132,3 +132,17 @@ $RECYCLE.BIN/
 .DS_Store
 
 _NCrunch*
+/.vs
+/Build/NasdaqTrader.Bot.Core.dll
+/Build/NasdaqTrader.CLI.dll
+/Build/NasdaqTrader.CLI.exe
+/Build/NasdaqTraderSystem.Core.dll
+/Build/NasdaqTraderSystem.Html.dll
+/Source/.vs
+/Build/NasdaqTrader.Bot.Core.dll
+/Build/NasdaqTrader.CLI.dll
+/Build/NasdaqTrader.CLI.exe
+/Build/NasdaqTraderSystem.Core.dll
+/Build/NasdaqTraderSystem.Html.dll
+/Bots/RubenS/Properties
+/Bots/RubenS/.vs
