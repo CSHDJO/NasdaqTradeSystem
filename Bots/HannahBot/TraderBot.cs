@@ -8,16 +8,19 @@ public class TraderBot : ITraderBot
     private bool initialized = false;
     public IEnumerable<Opportunity> Opportunities { get; set; } = [];
     public List<Opportunity> ActiveOpportunities { get; set; } = [];
-    private int DayIndex = 0;
+    private int LookAhead = 0;
+    private decimal InitialCash = 0;
 
     public string CompanyName => "Hannah's Funky Algos Inc.";
 
     public async Task DoTurn(ITraderSystemContext systemContext)
     {
+        LookAhead += 1;
         if (!initialized)
         {
             Console.WriteLine("Initializing Hannah's Funky Algos Inc. Bot...");
             initialized = true;
+            InitialCash = systemContext.GetCurrentCash(this);
             Opportunities = OpportunisticElectricRock.GetAllOpportunities(systemContext.GetListings());
             Console.WriteLine($"Found {Opportunities.Count()} opportunities");
 
@@ -50,7 +53,7 @@ public class TraderBot : ITraderBot
         Console.WriteLine($"Going to try trading for day {systemContext.CurrentDate} with {ActiveOpportunities.Count} active opportunities and {systemContext.GetCurrentCash(this)} cash");
         var activeOpportunitiesEndingToday = ActiveOpportunities.Where(o => o.SellDate <= systemContext.CurrentDate);
 
-        while (systemContext.GetTradesLeftForToday(this) > 0 && activeOpportunitiesEndingToday.Any())
+        while (systemContext.GetTradesLeftForToday(this) > 0 && activeOpportunitiesEndingToday.Any() && systemContext.EndDate != systemContext.CurrentDate)
         {
             var currentHoldings = systemContext.GetHoldings(this);
             var activeOpportunity = activeOpportunitiesEndingToday.First();
@@ -61,10 +64,19 @@ public class TraderBot : ITraderBot
             ActiveOpportunities.Remove(activeOpportunity);
         }
 
+        var remainingCash = systemContext.GetCurrentCash(this);
+        if (remainingCash < InitialCash)
+        {
+            Console.WriteLine("Not enough cash to trade, skipping day");
+            return;
+        }
+
         var opportunities = Opportunities
             .Where(o => o.BuyDate == systemContext.CurrentDate)
-            .OrderByDescending(o => o.Score)
+            .Where(o => o.SellDate.DayNumber - o.BuyDate.DayNumber <= LookAhead)
+            .OrderByDescending(o => o.Score(remainingCash))
             .ToList();
+
 
         if (opportunities.Count == 0)
         {
@@ -76,7 +88,6 @@ public class TraderBot : ITraderBot
             Console.WriteLine($"Found {opportunities.Count} opportunities");
         }
 
-        var remainingCash = systemContext.GetCurrentCash(this);
         while (systemContext.GetTradesLeftForToday(this) > 0 && remainingCash > 10 && opportunities.Count > 0)
         {
             var currentHoldings = systemContext.GetHoldings(this);

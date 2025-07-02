@@ -2,62 +2,81 @@ using NasdaqTrader.Bot.Core;
 
 namespace HannahBot;
 
-public class Opportunity(
+public class Opportunity
+{
+    public Opportunity(
     IStockListing listing,
     DateOnly buyDate,
     DateOnly sellDate
 )
-{
-    public decimal ProfitPerShare => Listing.PricePoints.FirstOrDefault(p => p.Date == SellDate)!.Price - Listing.PricePoints.FirstOrDefault(p => p.Date == BuyDate)!.Price;
-    public decimal BuyPrice => Listing.PricePoints.FirstOrDefault(p => p.Date == BuyDate)!.Price;
-    public decimal SellPrice => Listing.PricePoints.FirstOrDefault(p => p.Date == SellDate)!.Price;
-    public decimal TradeDuration => SellDate.DayNumber - BuyDate.DayNumber;
-    public decimal Score => ProfitPerShare * Math.Max(1, Listing.PricePoints.Count() - TradeDuration);
+    {
+        Listing = listing;
+        BuyDate = buyDate;
+        SellDate = sellDate;
+        ProfitPerShare = Listing.PricePoints.FirstOrDefault(p => p.Date == SellDate)!.Price - Listing.PricePoints.FirstOrDefault(p => p.Date == BuyDate)!.Price;
+        BuyPrice = Listing.PricePoints.FirstOrDefault(p => p.Date == BuyDate)!.Price;
+        SellPrice = Listing.PricePoints.FirstOrDefault(p => p.Date == SellDate)!.Price;
+        TradeDuration = SellDate.DayNumber - BuyDate.DayNumber;
+    }
 
-    public IStockListing Listing { get; } = listing;
-    public DateOnly BuyDate { get; } = buyDate;
-    public DateOnly SellDate { get; } = sellDate;
+    public decimal ProfitPerShare;
+    public decimal BuyPrice;
+    public decimal SellPrice;
+    public decimal TradeDuration;
+	public decimal Score(decimal currentCash)
+	{
+		var maxAffordableShares = Math.Min(1000, (int)(currentCash / BuyPrice));
+		if (maxAffordableShares == 0) return 0;
+		
+        var totalProfit = ProfitPerShare * maxAffordableShares;
+		return totalProfit / (TradeDuration * BuyPrice);
+	}
+
+    public IStockListing Listing { get; }
+    public DateOnly BuyDate { get; }
+    public DateOnly SellDate { get; }
 }
 
 internal class OpportunisticElectricRock
 {
     public static IEnumerable<Opportunity> GetAllOpportunities(IEnumerable<IStockListing> listings)
     {
-        IEnumerable<Opportunity> opportunities = [];
-        foreach (var listing in listings)
-            opportunities = opportunities.Concat(OpportunityForListing(listing));
-
-        return opportunities;
+        return listings.AsParallel()
+            .SelectMany(OpportunityForListing)
+            .ToList();
     }
 
     private static List<Opportunity> OpportunityForListing(IStockListing listing)
     {
+        var pricePoints = listing.PricePoints;
         var numberOfDays = listing.PricePoints.Length;
         var opportunities = new List<Opportunity>();
-        // Console.WriteLine($"calculating opportunities for {listing.Name} for {numberOfDays} days with look ahead of {LookAheadDays} days");
+        
         for (int buyDay = 0; buyDay < numberOfDays; buyDay++)
         {
-            // Console.WriteLine($"Checking for buy day {buyDay}");
-            var currentBuyPricePoint = listing.PricePoints[buyDay];
-            if (currentBuyPricePoint.Price <= 0)
+            var buyPoint = pricePoints[buyDay];
+            if (buyPoint.Price <= 0)
                 continue;
 
+            decimal maxSellPrice = buyPoint.Price;
             for (int sellDay = buyDay + 1; sellDay < numberOfDays; sellDay++)
             {
-                var currentSellPricePoint = listing.PricePoints[sellDay];
+                var sellPoint = pricePoints[sellDay];
+                if (sellPoint.Price <= 0)
+                    continue;
 
-                var profit = currentSellPricePoint.Price - currentBuyPricePoint.Price;
-
-                if (profit > 0)
+                if (sellPoint.Price > buyPoint.Price)
                     opportunities.Add(new Opportunity(
                         listing,
-                        currentBuyPricePoint.Date,
-                        currentSellPricePoint.Date
+                        buyPoint.Date,
+                        sellPoint.Date
                     ));
             }
         }
 
+#if DEBUG
         Console.WriteLine($"Found {opportunities.Count} opportunities for stock {listing.Name}");
+#endif
         return opportunities;
     }
 }
