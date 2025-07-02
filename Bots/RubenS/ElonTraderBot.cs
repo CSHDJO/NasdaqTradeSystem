@@ -7,7 +7,7 @@ public class ElonTraderBot : ITraderBot
     const int MaxSharesPerStock = 1000;
     private readonly Dictionary<DateOnly, List<IStockListing>> sellSchedule = [];
 
-    public string CompanyName => "ElonTrader &#8482;";
+    public string CompanyName => "ElonTrader";
 
     public async Task DoTurn(ITraderSystemContext systemContext)
     {
@@ -55,8 +55,7 @@ public class ElonTraderBot : ITraderBot
 
         var bestTrades = candidates
             .OrderByDescending(t => t.profitPerShare)
-            .Take(systemContext.GetTradesLeftForToday(this))
-            .ToList();
+            .Take(systemContext.GetTradesLeftForToday(this));
 
         foreach (var (stock, sellDay, profit) in bestTrades)
         {
