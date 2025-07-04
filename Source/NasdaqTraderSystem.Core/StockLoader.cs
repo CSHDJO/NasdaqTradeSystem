@@ -65,6 +65,11 @@ public class StockLoader
             }
 
             stockListing.PricePoints = pricePoints.OfType<IPricePoint>().ToArray();
+            if (stockListing.PricePoints.Length == 0)
+            {
+                Console.WriteLine($"Listing with no prices '{stockListing.Ticker}'");
+                continue;
+            }
             listings.Add(stockListing);
         }
 

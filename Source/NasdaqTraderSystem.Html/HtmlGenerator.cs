@@ -73,7 +73,7 @@ public class HtmlGenerator
         Directory.CreateDirectory(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}"));
         File.WriteAllText(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "GameResult.html"), GetGameHtml(results));
 
-        var files = Directory.GetDirectories(baseDirectory).Reverse().ToArray();
+        var files = Directory.GetDirectories(baseDirectory).Reverse().Where(b=> !b.Contains(".git")).ToArray();
         GenerateIndex(baseDirectory, files);
 
         foreach (var task in tasks)

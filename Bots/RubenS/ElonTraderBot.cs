@@ -7,7 +7,7 @@ public class ElonTraderBot : ITraderBot
     const int MaxSharesPerStock = 1000;
     private readonly Dictionary<DateOnly, List<IStockListing>> sellSchedule = [];
 
-    public string CompanyName => "ElonTrader &#8482;";
+    public string CompanyName => "ElonTrader";
 
     public async Task DoTurn(ITraderSystemContext systemContext)
     {
