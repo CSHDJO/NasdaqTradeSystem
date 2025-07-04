@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "Profile 1": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Source\\NasdaqTradeSystem\\Build\\NasdaqTrader.CLI.exe",
+      "workingDirectory": "C:\\Source\\NasdaqTradeSystem\\Build"
+    }
+  }
+}

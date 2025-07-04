@@ -195,7 +195,7 @@ public class HtmlGenerator
 
                 string html = GenerateHtmlForPlayer(player, baseDirectory, traderSystemSimulation,
                     gameDate);
-                File.WriteAllText(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", "{player.CompanyName}.html"), html);
+                File.WriteAllText(Path.Combine(baseDirectory, $"{gameDate:dd-MM-yyyy-HH-mm}", $"{player.CompanyName}.html"), html);
             }));
         }
 
