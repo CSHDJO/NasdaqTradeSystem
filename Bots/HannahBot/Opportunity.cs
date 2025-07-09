@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using NasdaqTrader.Bot.Core;
 
 namespace HannahBot;
+
 public class Opportunity
 {
     public Opportunity(
@@ -21,20 +22,22 @@ public class Opportunity
         BuyPrice = buyPoint.Price;
         SellPrice = sellPoint.Price;
         TradeDuration = SellDate.DayNumber - BuyDate.DayNumber;
+        StaticScore = ProfitPerShare / (TradeDuration * BuyPrice);
     }
 
     public decimal ProfitPerShare;
     public decimal BuyPrice;
     public decimal SellPrice;
     public decimal TradeDuration;
-	public decimal Score(decimal currentCash)
-	{
-		var maxAffordableShares = Math.Min(1000, (int)(currentCash / BuyPrice));
-		if (maxAffordableShares == 0) return 0;
-		
+    public decimal StaticScore;
+    public decimal Score(decimal currentCash)
+    {
+        var maxAffordableShares = Math.Min(1000, (int)(currentCash / BuyPrice));
+        if (maxAffordableShares == 0) return 0;
+
         var totalProfit = ProfitPerShare * maxAffordableShares;
-		return totalProfit / (TradeDuration * BuyPrice);
-	}
+        return totalProfit / (TradeDuration * BuyPrice);
+    }
 
     public IStockListing Listing { get; }
     public DateOnly BuyDate { get; }

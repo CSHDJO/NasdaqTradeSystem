@@ -5,6 +5,8 @@ namespace HannahBot;
 
 internal class OpportunisticElectricRock
 {
+    private const int MAX_LOOKAHEAD = 10;
+
     public static IEnumerable<Opportunity> GetAllOpportunities(IEnumerable<IStockListing> listings)
     {
         return listings.AsParallel()
@@ -15,17 +17,16 @@ internal class OpportunisticElectricRock
     private static List<Opportunity> OpportunityForListing(IStockListing listing)
     {
         var pricePoints = listing.PricePoints;
-        var maxLookAhead = Math.Min(30, pricePoints.Length - 1);
+        var maxLookAhead = Math.Min(MAX_LOOKAHEAD, pricePoints.Length - 1);
         var numberOfDays = listing.PricePoints.Length;
         var opportunities = new List<Opportunity>();
-        
+
         for (int buyDay = 0; buyDay < numberOfDays; buyDay++)
         {
             var buyPoint = pricePoints[buyDay];
             if (buyPoint.Price <= 0)
                 continue;
 
-            decimal maxSellPrice = buyPoint.Price;
             int maxSellDay = Math.Min(buyDay + maxLookAhead, numberOfDays);
             for (int sellDay = buyDay + 1; sellDay < maxSellDay; sellDay++)
             {
