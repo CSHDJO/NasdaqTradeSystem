@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using NasdaqTrader.Bot.Core;
 
 namespace HannahBot;
