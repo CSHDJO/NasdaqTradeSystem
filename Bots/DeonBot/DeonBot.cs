@@ -6,14 +6,25 @@ public class DeonBot : ITraderBot
 {
     public string CompanyName => "BankruptSolutions";
 
+    public static int Day = 0;
+
     public async Task DoTurn(ITraderSystemContext systemContext)
     {
-        var listings = systemContext.GetListings();
+        Day = systemContext.CurrentDate.Day;
 
-        for(int i = 0; i < 4; i++)
+        foreach (var holding in systemContext.GetHoldings(this))
         {
             Random random = new Random();
-            systemContext.BuyStock(this, listings[random.Next(0, listings.Count)], random.Next(1, 10));
+            systemContext.SellStock(this, holding.Listing, random.Next(1, holding.Amount));
         }
+
+        var listings = systemContext.GetListings();
+
+        for (int i = 0; i < 100; i++)
+        {
+            Random random = new Random();
+            systemContext.BuyStock(this, listings[random.Next(0, listings.Count)], random.Next(1, 5));
+        }
+
     }
 }
