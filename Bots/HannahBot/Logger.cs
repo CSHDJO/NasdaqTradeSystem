@@ -5,12 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace HannahBot;
+
 internal class Logger
 {
     public static void Log(string message)
     {
 #if DEBUG
-        Console.WriteLine($"{DateTime.Now:yyyy-MM-dd HH:mm:ss} - {message}");
+        Console.WriteLine($"{DateTime.Now:ss:fff} - {message}");
 #endif
     }
 }
