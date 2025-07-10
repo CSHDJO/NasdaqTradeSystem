@@ -63,29 +63,27 @@ TraderSystemSimulation traderSystemSimulation = new TraderSystemSimulation(
 Dictionary<ITraderBot, Task> playerTasks = new();
 foreach (var player in traderSystemSimulation.Players)
 {
-    playerTasks.Add(player,
-        Task.Run(async () =>
-        {
-            while (await traderSystemSimulation.DoSimulationStep(player))
-            {
-            }
-        }));
-}
-
-await Task.Delay(timeLimit);
-foreach (var player in traderSystemSimulation.Players)
-{
-    if (playerTasks[player].IsCompleted == false)
+    CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+    var token = cancellationTokenSource.Token;
+    var task = Task.Run(async () =>
     {
-        traderSystemSimulation.DidNotFinished.Add(player);
+        while (await traderSystemSimulation.DoSimulationStep(player))
+        {
+            if (token.IsCancellationRequested)
+            {
+                traderSystemSimulation.DidNotFinished.Add(player);
+                break;
+            }
+        }
+    }, cancellationToken: token);
+
+    await Task.Delay(timeLimit);
+    await cancellationTokenSource.CancelAsync();
+    while (task is { IsCompleted: false, IsCanceled: false, IsFaulted: false })
+    {
+        await Task.Delay(100);
     }
 }
-
-foreach (var player in traderSystemSimulation.Players)
-{
-    playerTasks[player].Wait();
-}
-
 
 Console.WriteLine("Generating html results");
 html.GenerateFiles(Path.Combine(AppContext.BaseDirectory, "Results"), traderSystemSimulation);
