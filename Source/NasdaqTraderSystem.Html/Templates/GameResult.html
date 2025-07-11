@@ -30,6 +30,7 @@
                     <thead>
                     <tr>
                         <th scope="col">Company</th>
+                        <th scope="col">Run Duration</th>
                         <th scope="col">Cash</th>
                         <th scope="col">Holdings</th>
                         <th scope="col">Total worth</th>
@@ -39,6 +40,7 @@
                     {{#Companies}}
                     <tr scope="row">
                         <td><a href="{{Name}}.html">{{Name}}</a></td>
+                        <td>{{RunDuration}}s</td>
                         <td>{{Cash}}</td>
                         <td>{{HoldingsValue}}</td>
                         <td>{{Total}}</td>

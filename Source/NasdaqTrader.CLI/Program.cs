@@ -67,6 +67,7 @@ foreach (var player in traderSystemSimulation.Players)
     var token = cancellationTokenSource.Token;
     var task = Task.Run(async () =>
     {
+        traderSystemSimulation.Durations[player].Start();
         while (await traderSystemSimulation.DoSimulationStep(player))
         {
             if (token.IsCancellationRequested)
@@ -75,6 +76,7 @@ foreach (var player in traderSystemSimulation.Players)
                 break;
             }
         }
+        traderSystemSimulation.Durations[player].Stop();
     }, cancellationToken: token);
 
     await Task.Delay(timeLimit);

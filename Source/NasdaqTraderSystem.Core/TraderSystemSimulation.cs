@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using NasdaqTrader.Bot.Core;
 
 namespace NasdaqTraderSystem.Core;
@@ -14,6 +15,7 @@ public class TraderSystemSimulation
     public ConcurrentDictionary<ITraderBot, List<IHolding>> Holdings { get; set; } = new();
     public ConcurrentDictionary<ITraderBot, List<ITrade>> Trades { get; set; } = new();
     public ConcurrentDictionary<ITraderBot, TraderSystemContext> Contexts { get; set; } = new();
+    public ConcurrentDictionary<ITraderBot, Stopwatch> Durations { get; set; } = new();
     public DateOnly StartDate { get; set; }
     public DateOnly EndDate { get; set; }
     public BlockingCollection<ITraderBot> DidNotFinished { get; set; }
@@ -30,6 +32,7 @@ public class TraderSystemSimulation
             BankAccounts.TryAdd(player, startingCash);
             Holdings.TryAdd(player, new());
             Trades.TryAdd(player, new());
+            Durations.TryAdd(player, new Stopwatch());
 
             var systemContext = new TraderSystemContext(this);
             systemContext.CurrentDate = from;

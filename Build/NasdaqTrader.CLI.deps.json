@@ -185,7 +185,10 @@
       },
       "NasdaqTrader.Bot.Core/1.0.0": {
         "runtime": {
-          "NasdaqTrader.Bot.Core.dll": {}
+          "NasdaqTrader.Bot.Core.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       },
       "NasdaqTraderSystem.Core/1.0.0": {
@@ -193,7 +196,10 @@
           "NasdaqTrader.Bot.Core": "1.0.0"
         },
         "runtime": {
-          "NasdaqTraderSystem.Core.dll": {}
+          "NasdaqTraderSystem.Core.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       },
       "NasdaqTraderSystem.Html/1.0.0": {
@@ -203,7 +209,10 @@
           "ScottPlot": "5.0.55"
         },
         "runtime": {
-          "NasdaqTraderSystem.Html.dll": {}
+          "NasdaqTraderSystem.Html.dll": {
+            "assemblyVersion": "1.0.0",
+            "fileVersion": "1.0.0.0"
+          }
         }
       }
     }
