@@ -8,9 +8,9 @@ public class StockLoader
     private string[] _selectedCsvs;
     private string _dataFolder;
 
-    public StockLoader(string dataFolder, int amountOfStocks)
+    public StockLoader(string dataFolder, int amountOfStocks, int? seed = null)
     {
-        var random = new Random();
+        Random random = seed == null ? new() : new((int)seed);
         string[] csvFiles = Directory.GetFiles(dataFolder, "*.csv");
 
         _selectedCsvs = new string[amountOfStocks];
