@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "AleixBot": {
+      "commandName": "Project"
+    },
+    "Run Game": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Users\\AleixH\\Documents\\GitHub\\NasdaqTradeSystem\\Build\\NasdaqTrader.CLI.exe"
+    }
+  }
+}
