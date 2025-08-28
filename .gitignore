@@ -142,3 +142,4 @@ _NCrunch*
 /Build/NasdaqTraderSystem.Html.dll
 /Bots/AleixBot.Tests/AleixBot.Tests.csproj
 /Bots/AleixBot.Tests/ListingPickerTests.cs
+/Bots/AleixBot/Properties/launchSettings.json
