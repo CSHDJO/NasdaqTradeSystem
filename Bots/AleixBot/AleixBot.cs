@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
+
 namespace AleixBot;
 
 public class AleixBot : ITraderBot

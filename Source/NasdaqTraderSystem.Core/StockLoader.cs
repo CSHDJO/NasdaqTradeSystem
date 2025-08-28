@@ -8,9 +8,9 @@ public class StockLoader
     private string[] _selectedCsvs;
     private string _dataFolder;
 
-    public StockLoader(string dataFolder, int amountOfStocks)
+    public StockLoader(string dataFolder, int amountOfStocks, int? seed = null)
     {
-        var random = new Random();
+        Random random = seed == null ? new() : new((int)seed);
         string[] csvFiles = Directory.GetFiles(dataFolder, "*.csv");
 
         _selectedCsvs = new string[amountOfStocks];
@@ -65,10 +65,15 @@ public class StockLoader
             }
 
             stockListing.PricePoints = pricePoints.OfType<IPricePoint>().ToArray();
+            if (stockListing.PricePoints.Length == 0)
+            {
+                Console.WriteLine($"Listing with no prices '{stockListing.Ticker}'");
+                continue;
+            }
             listings.Add(stockListing);
         }
 
-        string[][] tickerInfo = File.ReadAllText(_dataFolder + "\\Tickers.txt").Split(Environment.NewLine)
+        string[][] tickerInfo = File.ReadAllText(Path.Combine(_dataFolder, "Tickers.txt")).Split(Environment.NewLine)
             .Select(c => c.Split('|')).ToArray();
         foreach (var info in tickerInfo)
         {

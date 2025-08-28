@@ -20,6 +20,7 @@ public class CompanyResult
     public decimal Cash { get; set; }
     public IHolding[] Holdings { get; set; } = Array.Empty<IHolding>();
     public DateOnly OnDate { get; set; }
+    public TimeSpan RunDuration { get; set; }
     public decimal HoldingsValue { get; set; }
     public decimal Total { get; set; }
 }
