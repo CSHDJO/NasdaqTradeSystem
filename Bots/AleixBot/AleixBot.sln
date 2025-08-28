@@ -7,6 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AleixBot", "AleixBot.csproj
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AleixBot.Tests", "..\AleixBot.Tests\AleixBot.Tests.csproj", "{716FB5B8-EB7F-4FC1-90C7-7FD2FAE3DBA4}"
 EndProject
+
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,10 +22,12 @@ Global
 		{716FB5B8-EB7F-4FC1-90C7-7FD2FAE3DBA4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{716FB5B8-EB7F-4FC1-90C7-7FD2FAE3DBA4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{716FB5B8-EB7F-4FC1-90C7-7FD2FAE3DBA4}.Release|Any CPU.Build.0 = Release|Any CPU
+
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
+
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C00082EE-EABB-41B9-A550-6A1DEB725E5E}
 	EndGlobalSection
