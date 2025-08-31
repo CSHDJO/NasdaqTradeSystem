@@ -6,8 +6,6 @@ namespace YurritBot;
 public class YurritBot : ITraderBot
 {
     public string CompanyName => "Stock Out Like a Sore Thumb";
-
-    private const int timeScale = 1;
     private const string logFileName = "yurritbot_log.html";
 
     public async Task DoTurn(ITraderSystemContext systemContext)
@@ -30,12 +28,13 @@ public class YurritBot : ITraderBot
         if (indexToday == 0)
         {
             logger.Erase();
+            logger.Initialize();
         }
         logger.LogHeader1($"{systemContext.CurrentDate}");
         logger.Log($"{DateTime.Now:dd-MMM-yyyy,hh:mm::ss.fff}");
 
-        new Seller().ExecuteStrategy(this, systemContext, indexToday, logger);
-        new Buyer().ExecuteStrategy(this, systemContext, indexToday, indexToday + timeScale, logger);
+        new Seller().ExecuteStrategy(this, systemContext, logger);
+        new Buyer().ExecuteStrategy(this, systemContext, logger);
 
     }
 

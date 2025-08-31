@@ -5,7 +5,7 @@ namespace YurritBot;
 
 class Seller()
 {
-    public void ExecuteStrategy(ITraderBot traderBot, ITraderSystemContext systemContext, int indexToday, ILogger logger)
+    public void ExecuteStrategy(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger)
     {
         logger.LogHeader2($"Sell");
 
@@ -21,11 +21,11 @@ class Seller()
 
         foreach (var holding in holdings)
         {
-            TrySellHolding(traderBot, systemContext, indexToday, logger, holding);
+            TrySellHolding(traderBot, systemContext, logger, holding);
         }
     }
 
-    private static void TrySellHolding(ITraderBot traderBot, ITraderSystemContext systemContext, int indexToday, ILogger logger, IHolding holding)
+    private static void TrySellHolding(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger, IHolding holding)
     {
         if (holding.Amount == 0)
         {
@@ -38,7 +38,7 @@ class Seller()
             category: success ? "" : "ERR",
             ticker: holding.Listing.Ticker,
             currentCash: systemContext.GetCurrentCash(traderBot),
-            pricePoint: holding.Listing.PricePoints[indexToday].Price,
+            pricePoint: systemContext.GetPriceOnDay(holding.Listing),
             amount: holding.Amount);
     }
 }

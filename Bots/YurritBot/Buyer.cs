@@ -9,18 +9,18 @@ public class Buyer()
     private const decimal cashlowerLimit = 100;
     private const int maximumBuyAmountPerStock = 1000;
 
-    public void ExecuteStrategy(ITraderBot traderBot, ITraderSystemContext systemContext, int indexToday, int indexReferenceDay, ILogger logger)
+    public void ExecuteStrategy(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger)
     {
         logger.LogHeader2($"Buy");
 
         logger.Log($"€{systemContext.GetCurrentCash(traderBot):F2}");
 
-        var listingsByExpectedIncrease = RankListings(traderBot, systemContext, indexToday, indexReferenceDay, logger);
+        var listingsByExpectedIncrease = RankListings(traderBot, systemContext, logger);
         logger.Log($"ranked listings: {listingsByExpectedIncrease.Count()}");
 
         var buyCalculator = new BuyCalculator(maximumBuyAmountPerStock);
 
-        if (!listingsByExpectedIncrease.Any())
+        if (listingsByExpectedIncrease.Count == 0)
         {
             logger.Log($"no listings");
             return;
@@ -41,31 +41,30 @@ public class Buyer()
                 return;
             }
 
-            TryBuyListing(traderBot, systemContext, indexToday, logger, currentCash, buyCalculator, listing);
+            TryBuyListing(traderBot, systemContext, logger, buyCalculator, listing);
         }
 
         logger.Log($"- €{systemContext.GetCurrentCash(traderBot):F2}");
     }
 
-    private static List<IStockListing> RankListings(ITraderBot traderBot, ITraderSystemContext systemContext, int indexToday, int indexReferenceDay, ILogger logger)
+    private static List<IStockListing> RankListings(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger)
     {
         var currentCash = systemContext.GetCurrentCash(traderBot);
-        //return systemContext.GetListings()
-        //    .Where(listing => listing.PricePoints[indexToday].Price <= currentCash)
-        //    .Where(listing => listing.PricePoints[indexReferenceDay].Price / listing.PricePoints[indexToday].Price > 1)
-        //    .OrderByDescending(listing => (listing.PricePoints[indexReferenceDay].Price / listing.PricePoints[indexToday].Price));
 
         Stopwatch stopwatch = Stopwatch.StartNew();
         var rankedListings = systemContext.GetListings()
-            .Select(l => new
+            .Select(l =>
             {
-                Listing = l,
-                PriceToday = l.PricePoints[indexToday].Price,
-                PriceRatio = l.PricePoints[indexReferenceDay].Price / l.PricePoints[indexToday].Price
+                var indexToday = Array.FindIndex(l.PricePoints, 0, l.PricePoints.Length, p => p.Date == systemContext.CurrentDate);
+                return new { Listing = l, IndexToday = indexToday };
             })
-            .Where(x => x.PriceToday <= currentCash
-                     && x.PriceRatio > 1)
-            .OrderByDescending(x => x.PriceRatio)
+            .Where(x =>
+                //x.IndexToday >= 0 &&
+                x.Listing.PricePoints[x.IndexToday].Price <= currentCash &&
+                //x.IndexToday + 1 < x.Listing.PricePoints.Count() &&
+                x.Listing.PricePoints[x.IndexToday + 1].Price > x.Listing.PricePoints[x.IndexToday].Price)
+            .OrderByDescending(x =>
+                x.Listing.PricePoints[x.IndexToday + 1].Price / x.Listing.PricePoints[x.IndexToday].Price)
             .Select(x => x.Listing)
             .ToList();
         stopwatch.Stop();
@@ -74,15 +73,18 @@ public class Buyer()
         return rankedListings;
     }
 
-    private static void TryBuyListing(ITraderBot traderBot, ITraderSystemContext systemContext, int indexToday, ILogger logger, decimal currentCash, BuyCalculator buyCalculator, IStockListing listing)
+    private static void TryBuyListing(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger,
+        BuyCalculator buyCalculator, IStockListing listing)
     {
-        if (currentCash < listing.PricePoints[indexToday].Price)
+        var price = systemContext.GetPriceOnDay(listing);
+        var currentCash = systemContext.GetCurrentCash(traderBot);
+
+        // Redundant? Already in Linq
+        if (currentCash < systemContext.GetPriceOnDay(listing))
         {
             logger.Log($"too expensive");
             return;
         }
-
-        var price = systemContext.GetPriceOnDay(listing);
 
         if (price < 0.0001m)
         {
@@ -90,7 +92,7 @@ public class Buyer()
             return;
         }
 
-        var maxBuyAmount = buyCalculator.CalculateMaximuumBuyAmount(currentCash, listing.PricePoints[indexToday].Price);
+        var maxBuyAmount = buyCalculator.CalculateMaximuumBuyAmount(currentCash, price);
 
         var success = systemContext.BuyStock(traderBot, listing, maxBuyAmount);
 
@@ -98,7 +100,7 @@ public class Buyer()
             category: success ? "" : "ERR",
             ticker: listing.Ticker,
             currentCash: systemContext.GetCurrentCash(traderBot),
-            pricePoint: listing.PricePoints[indexToday].Price,
+            pricePoint: price,
             amount: maxBuyAmount);
     }
 }
