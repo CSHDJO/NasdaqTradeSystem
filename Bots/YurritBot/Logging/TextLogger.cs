@@ -32,4 +32,9 @@ public class FileLogger(string logFilePath) : ILogger
     {
         File.Delete(logFilePath);
     }
+
+    public void Initialize()
+    {
+        
+    }
 }

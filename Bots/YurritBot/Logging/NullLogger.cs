@@ -7,6 +7,11 @@ public class NullLogger : ILogger
         
     }
 
+    public void Initialize()
+    {
+        
+    }
+
     public void Log(string text)
     {
         

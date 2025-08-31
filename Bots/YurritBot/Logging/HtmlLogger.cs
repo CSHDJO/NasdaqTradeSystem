@@ -1,4 +1,6 @@
-﻿namespace YurritBot.Logging;
+﻿using static System.Net.Mime.MediaTypeNames;
+
+namespace YurritBot.Logging;
 
 public class HtmlLogger(string logFilePath) : ILogger
 {
@@ -27,5 +29,13 @@ public class HtmlLogger(string logFilePath) : ILogger
     public void Erase()
     {
         File.Delete(logFilePath);
+    }
+
+    public void Initialize()
+    {
+        File.AppendAllText(logFilePath, $"<head>{Environment.NewLine}");
+        File.AppendAllText(logFilePath, $"<link rel=\"stylesheet\" href=\"./Bots/Logging/style.css\">{Environment.NewLine}");
+        File.AppendAllText(logFilePath, $"</head>{Environment.NewLine}");
+        File.AppendAllText(logFilePath, $"</body>{Environment.NewLine}");
     }
 }
