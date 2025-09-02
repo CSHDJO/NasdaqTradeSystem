@@ -56,15 +56,18 @@ public class Buyer()
             .Select(l =>
             {
                 var indexToday = Array.FindIndex(l.PricePoints, 0, l.PricePoints.Length, p => p.Date == systemContext.CurrentDate);
-                return new { Listing = l, IndexToday = indexToday };
+                var priceToday = l.PricePoints[indexToday].Price;
+                var priceTomorrow = l.PricePoints[indexToday + 1].Price;
+                var priceRatio = priceTomorrow / priceToday;
+                return new {
+                    Listing = l,
+                    PriceToday = priceToday,
+                    PriceRatio = priceRatio
+                };
             })
-            .Where(x =>
-                //x.IndexToday >= 0 &&
-                x.Listing.PricePoints[x.IndexToday].Price <= currentCash &&
-                //x.IndexToday + 1 < x.Listing.PricePoints.Count() &&
-                x.Listing.PricePoints[x.IndexToday + 1].Price > x.Listing.PricePoints[x.IndexToday].Price)
-            .OrderByDescending(x =>
-                x.Listing.PricePoints[x.IndexToday + 1].Price / x.Listing.PricePoints[x.IndexToday].Price)
+            .Where(x => x.PriceToday <= currentCash
+                    && x.PriceRatio > 1)
+            .OrderByDescending(x => x.PriceRatio)
             .Select(x => x.Listing)
             .ToList();
         stopwatch.Stop();
