@@ -16,46 +16,45 @@ public class Buyer()
         logger.Log($"€{systemContext.GetCurrentCash(traderBot):F2}");
 
         var listingsByExpectedIncrease = RankListings(traderBot, systemContext, logger);
-        logger.Log($"ranked listings: {listingsByExpectedIncrease.Count()}");
 
         var buyCalculator = new BuyCalculator(maximumBuyAmountPerStock);
 
-        if (listingsByExpectedIncrease.Count == 0)
-        {
-            logger.Log($"no listings");
-            return;
-        }
-
         foreach (var listing in listingsByExpectedIncrease)
         {
+            logger.Log($"Listing {listing.Ticker}");
+
             var currentCash = systemContext.GetCurrentCash(traderBot);
             if (systemContext.GetTradesLeftForToday(traderBot) <= 0)
             {
-                logger.Log($"no trades left");
+                logger.Log($"- no trades left");
                 return;
             }
 
             if (currentCash < cashlowerLimit)
             {
-                logger.Log($"cash below limit");
+                logger.Log($"- cash below limit");
                 return;
             }
 
+            logger.Log($"- buying");
             TryBuyListing(traderBot, systemContext, logger, buyCalculator, listing);
         }
-
-        logger.Log($"- €{systemContext.GetCurrentCash(traderBot):F2}");
     }
 
-    private static List<IStockListing> RankListings(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger)
+    private static IEnumerable<IStockListing> RankListings(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger)
     {
         var currentCash = systemContext.GetCurrentCash(traderBot);
 
+        logger.Log($"Ranking");
         Stopwatch stopwatch = Stopwatch.StartNew();
         var rankedListings = systemContext.GetListings()
             .Select(l =>
             {
+                // Very slow the first time around
                 var indexToday = Array.FindIndex(l.PricePoints, 0, l.PricePoints.Length, p => p.Date == systemContext.CurrentDate);
+                //var indexToday = l.PricePoints
+                //                    .Select((v, i) => new { v, i })
+                //                    .First(p => p.v.Date == systemContext.CurrentDate).i;
                 var priceToday = l.PricePoints[indexToday].Price;
                 var priceTomorrow = l.PricePoints[indexToday + 1].Price;
                 var priceRatio = priceTomorrow / priceToday;
@@ -65,13 +64,13 @@ public class Buyer()
                     PriceRatio = priceRatio
                 };
             })
-            .Where(x => x.PriceToday <= currentCash
-                    && x.PriceRatio > 1)
+            .Where(x =>// x.PriceToday <= currentCash &&
+                     x.PriceRatio > 1)
             .OrderByDescending(x => x.PriceRatio)
-            .Select(x => x.Listing)
-            .ToList();
+            .Select(x => x.Listing);
+
         stopwatch.Stop();
-        logger.Log($"Ranking took {stopwatch.ElapsedTicks} ticks");
+        logger.Log($"- took {stopwatch.ElapsedTicks} ticks");
 
         return rankedListings;
     }
@@ -85,13 +84,13 @@ public class Buyer()
         // Redundant? Already in Linq
         if (currentCash < systemContext.GetPriceOnDay(listing))
         {
-            logger.Log($"too expensive");
+            logger.Log($"  - too expensive");
             return;
         }
 
         if (price < 0.0001m)
         {
-            logger.Log($"Failed to get price");
+            logger.Log($"  - failed to get price");
             return;
         }
 
