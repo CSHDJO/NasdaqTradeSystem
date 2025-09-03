@@ -1,6 +1,6 @@
 ﻿namespace YurritBot.Logging;
 
-public class FileLogger(string logFilePath) : ILogger
+public class TextLogger(string logFilePath) : ILogger
 {
     private readonly string logFilePath = logFilePath;
 
