@@ -2,7 +2,7 @@
 
 public class BuyCalculator(int maximumBuyAmountPerStock)
 {
-    public int MaximumBuyAmountPerStock { get; private set; } = maximumBuyAmountPerStock;
+    private int maximumBuyAmountPerStock = maximumBuyAmountPerStock;
 
     public int CalculateMaximuumBuyAmount(decimal currentCash, decimal listingPrice)
     {

@@ -5,7 +5,7 @@ using YurritBot;
 namespace YurritBotTests;
 
 [TestFixture]
-public class BuyerTests
+public class BuyCalculatorTests
 {
     [TestCase(500, 20, 25)]
     [TestCase(5000, 2, 1000)]

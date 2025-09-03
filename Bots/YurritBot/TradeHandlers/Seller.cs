@@ -1,11 +1,15 @@
 ﻿using NasdaqTrader.Bot.Core;
 using YurritBot.Logging;
 
-namespace YurritBot;
+namespace YurritBot.TradeHandlers;
 
-class Seller()
+public class Seller(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger) : ITradeHandler
 {
-    public void ExecuteStrategy(ITraderBot traderBot, ITraderSystemContext systemContext, ILogger logger)
+    private readonly ITraderBot traderBot = traderBot;
+    private readonly ITraderSystemContext systemContext = systemContext;
+    private readonly ILogger logger = logger;
+
+    public void ExecuteStrategy()
     {
         logger.LogHeader2($"Sell");
 
@@ -15,7 +19,7 @@ class Seller()
             .Where(holding => holding.Amount > 0);
         if (!holdings.Any())
         {
-            logger.Log($"no holdings");
+            logger.Log($"- no holdings");
             return;
         }
 
@@ -35,7 +39,7 @@ class Seller()
         var success = systemContext.SellStock(traderBot, holding.Listing, holding.Amount);
 
         logger.LogTransaction(
-            category: success ? "" : "ERR",
+            category: success ? "- SELL" : "- SELL ERR",
             ticker: holding.Listing.Ticker,
             currentCash: systemContext.GetCurrentCash(traderBot),
             pricePoint: systemContext.GetPriceOnDay(holding.Listing),
