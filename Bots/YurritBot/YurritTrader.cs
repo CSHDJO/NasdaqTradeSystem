@@ -1,4 +1,4 @@
-﻿using NasdaqTrader.Bot.Core;
+using NasdaqTrader.Bot.Core;
 using YurritBot.Logging;
 using YurritBot.TradeHandlers;
 
