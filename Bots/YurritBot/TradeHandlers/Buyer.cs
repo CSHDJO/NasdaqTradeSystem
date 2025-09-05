@@ -24,7 +24,7 @@ public class Buyer(ITraderBot traderBot, ITraderSystemContext systemContext, ILo
         var rankedListings = RankListingsByExpectedIncrease(traderBot, systemContext, logger);
         stopwatch.Stop();
         logger.Log($"- took {stopwatch.Elapsed}");
-        
+
         logger.Log($"Buying");
         var buyCalculator = new BuyCalculator(maximumBuyAmountPerStock);
         foreach (var listing in rankedListings)
