@@ -1,50 +1,29 @@
-﻿using NasdaqTrader.Bot.Core;
-using System.Diagnostics;
+using NasdaqTrader.Bot.Core;
 using YurritBot.Logging;
+using YurritBot.TradeHandlers;
 
 namespace YurritBot;
 
 public class YurritBot : ITraderBot
 {
     public string CompanyName => "Stock Out Like a Sore Thumb";
-    
-    private const int timeScale = 1;
+    private const string logFileName = "yurritbot_log.html";
 
     public async Task DoTurn(ITraderSystemContext systemContext)
     {
+        //var logger = new HtmlLogger(Path.Combine(AppContext.BaseDirectory, logFileName));
         var logger = new NullLogger();
 
-        logger.Log($"");
-        logger.Log($"{systemContext.CurrentDate}");
-        logger.Log($"=========");
+        if (!File.Exists(Path.Combine(AppContext.BaseDirectory, logFileName)))
+        {
+            logger.Initialize();
+        }
 
-        int indexToday = new DateCalculator()
-            .DetermineDateIndex(systemContext.CurrentDate, systemContext.GetListings().First().PricePoints);
+        logger.LogHeader1($"{systemContext.CurrentDate}");
+        logger.Log($"{DateTime.Now:dd-MMM-yyyy,hh:mm::ss.fff}");
 
-        logger.Log($"- €{systemContext.GetCurrentCash(this):F2}");
+        new Seller(this, systemContext, logger).ExecuteStrategy();
+        new Buyer(this, systemContext, logger).ExecuteStrategy();
 
-        logger.Log($"SELL");
-        logger.Log($"----");
-        var timerSell = new Stopwatch();
-        timerSell.Start();
-        new Seller(this, systemContext, indexToday, indexToday - timeScale, logger)
-            .ExecuteStrategy();
-        timerSell.Stop();
-        logger.Log($"- {timerSell.ElapsedMilliseconds}ms");
-
-        logger.Log($"- €{systemContext.GetCurrentCash(this):F2}");
-
-        logger.Log($"BUY");
-        logger.Log($"---");
-        var timerBuy = new Stopwatch();
-        timerBuy.Start();
-        new Buyer(this, systemContext, indexToday, indexToday + timeScale, logger)
-            .ExecuteStrategy();
-        timerBuy.Stop();
-        logger.Log($"- {timerBuy.ElapsedMilliseconds}ms");
-
-        logger.Log($"- €{systemContext.GetCurrentCash(this):F2}");
     }
-
-    
 }

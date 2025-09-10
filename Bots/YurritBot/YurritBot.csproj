@@ -19,5 +19,10 @@
         <HintPath>..\..\Build\NasdaqTrader.Bot.Core.dll</HintPath>
       </Reference>
     </ItemGroup>
+    <ItemGroup>
+      <None Update="Logging\style.css">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+    </ItemGroup>
 
 </Project>
