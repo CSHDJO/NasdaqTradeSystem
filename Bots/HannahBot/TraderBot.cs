@@ -1,3 +1,5 @@
+#pragma warning disable CS1998 // Async method lacks 'await' operators and will run synchronously
+
 using System.Diagnostics;
 using NasdaqTrader.Bot.Core;
 
@@ -7,11 +9,12 @@ public class TraderBot : ITraderBot
 {
     public const int MaxSharesPerListing = 1000;
     private bool initialized = false;
-    public IEnumerable<Opportunity> Opportunities { get; set; } = [];
-    public List<Opportunity> ActiveOpportunities { get; set; } = [];
+    public required IDictionary<DateOnly, List<Opportunity>> Opportunities { get; set; }
+    public IDictionary<DateOnly, List<Opportunity>> ActiveOpportunities { get; set; } = new Dictionary<DateOnly, List<Opportunity>>();
     private int LookAhead = 0;
     private decimal InitialCash = 0;
-    private Stopwatch stopwatch = new Stopwatch();
+    private int DefaultTradesLeftToday = 0;
+    private readonly Stopwatch stopwatch = new();
 
     public string CompanyName => "Hannah's Funky Algos Inc.";
 
@@ -20,55 +23,79 @@ public class TraderBot : ITraderBot
         LookAhead += 1;
         if (!initialized)
         {
+#if DEBUG
             stopwatch.Restart();
+#endif
             Logger.Log("Initializing Hannah's Funky Algos Inc. Bot...");
             initialized = true;
+            DefaultTradesLeftToday = systemContext.GetTradesLeftForToday(this);
             InitialCash = systemContext.GetCurrentCash(this);
-            Opportunities = OpportunisticElectricRock.GetAllOpportunities(systemContext.GetListings());
-            Logger.Log($"Found {Opportunities.Count()} opportunities");
-            Logger.Log("Done initializing Hannah's Funky Algos Inc. Bot");
+            Opportunities = OpportunisticElectricRock.GetAllOpportunities(systemContext.GetListings())
+                .GroupBy(o => o.BuyDate)
+                .ToDictionary(g => g.Key, g => g.ToList());
+
+            Logger.Log($"Found {Opportunities.Count} opportunities");
         }
 
+#if DEBUG
         // TODO: Current date is further than end date?
         if (systemContext.EndDate <= systemContext.CurrentDate)
         {
             stopwatch.Stop();
             Logger.Log($"Total time taken: {stopwatch.ElapsedMilliseconds} ms");
         }
+#endif
+        var remainingCash = systemContext.GetCurrentCash(this);
 
-        Logger.Log($"Going to try trading for day {systemContext.CurrentDate} with {ActiveOpportunities.Count} active opportunities and {systemContext.GetCurrentCash(this)} cash");
-        Logger.Log($"End date is {systemContext.EndDate}, current date is {systemContext.CurrentDate}, trades left for today: {systemContext.GetTradesLeftForToday(this)}");
-        var activeOpportunitiesEndingToday = ActiveOpportunities.Where(o => o.SellDate <= systemContext.CurrentDate);
+        Logger.Log($"Going to try trading for day {systemContext.CurrentDate} with {ActiveOpportunities.Count} active opportunities and {remainingCash} cash");
+        var tradesLeftToday = DefaultTradesLeftToday;
 
-        while (systemContext.GetTradesLeftForToday(this) > 0 && activeOpportunitiesEndingToday.Any() && systemContext.EndDate != systemContext.CurrentDate)
+        if (ActiveOpportunities.TryGetValue(systemContext.CurrentDate, out var activeOpportunitiesToday))
         {
-            var currentHoldings = systemContext.GetHoldings(this);
-            var activeOpportunity = activeOpportunitiesEndingToday.First();
-            var matchingHolding = currentHoldings.First(h => h.Listing.Ticker == activeOpportunity.Listing.Ticker);
+            while (tradesLeftToday > 0 && activeOpportunitiesToday.Count != 0 && systemContext.EndDate != systemContext.CurrentDate)
+            {
+                var currentHoldings = systemContext.GetHoldings(this);
+                var activeOpportunity = activeOpportunitiesToday[0];
+                activeOpportunitiesToday.RemoveAt(0);
 
-            Logger.Log($"Sold {matchingHolding.Listing.Ticker}");
-            systemContext.SellStock(this, matchingHolding.Listing, matchingHolding.Amount);
-            ActiveOpportunities.Remove(activeOpportunity);
+                var matchingHolding = currentHoldings.First(h => h.Listing.Ticker == activeOpportunity.Listing.Ticker);
+
+                Logger.Log($"Sold {matchingHolding.Listing.Ticker}");
+                systemContext.SellStock(this, matchingHolding.Listing, matchingHolding.Amount);
+                tradesLeftToday -= 1;
+                remainingCash = systemContext.GetCurrentCash(this);
+                activeOpportunitiesToday.Remove(activeOpportunity);
+            }
+
         }
 
-        var remainingCash = systemContext.GetCurrentCash(this);
+
         if (remainingCash < InitialCash)
         {
             Logger.Log("Not enough cash to trade, skipping day");
             return;
         }
 
-        if (systemContext.GetTradesLeftForToday(this) == 0)
+        if (tradesLeftToday == 0)
         {
             Logger.Log("No trades left for today, skipping day");
             return;
         }
 
-        var opportunities = Opportunities
-            .Where(o => o.BuyDate == systemContext.CurrentDate)
-            .Where(o => o.SellDate.DayNumber - o.BuyDate.DayNumber <= LookAhead)
-            .OrderByDescending(o => o.StaticScore)
-            .ToList();
+        List<Opportunity> opportunities = [];
+        if (Opportunities.TryGetValue(systemContext.CurrentDate, out var todaysOpportunities))
+        {
+
+            opportunities = todaysOpportunities
+                .Where(o => o.TradeDuration <= LookAhead)
+                .OrderByDescending(o => o.StaticScore)
+                .ToList();
+        }
+        else
+        {
+            Logger.Log($"No opportunities found for date {systemContext.CurrentDate}");
+            return;
+        }
 
         if (opportunities.Count == 0)
         {
@@ -80,20 +107,30 @@ public class TraderBot : ITraderBot
             Logger.Log($"Found {opportunities.Count} opportunities");
         }
 
-        while (systemContext.GetTradesLeftForToday(this) > 0 && remainingCash > 10 && opportunities.Count > 0)
+        while (tradesLeftToday > 0 && remainingCash > 10 && opportunities.Count > 0)
         {
-            var currentHoldings = systemContext.GetHoldings(this);
-            var opportunity = opportunities.First();
-
-            var amountToBuy = Math.Min(1000, (int)(remainingCash / systemContext.GetPriceOnDay(opportunity.Listing)));
+            var opportunity = opportunities[0];
+            var amountToBuy = Math.Min(1000, (int)(remainingCash / opportunity.BuyPrice));
             var success = systemContext.BuyStock(this, opportunity.Listing, amountToBuy);
+            tradesLeftToday -= 1;
             if (!success)
             {
                 Logger.Log($"Failed to buy {opportunity.Listing.Ticker} for {amountToBuy} shares at price {systemContext.GetPriceOnDay(opportunity.Listing)} with cash {remainingCash} for sell date {opportunity.SellDate}");
             }
             else
             {
-                ActiveOpportunities.Add(opportunity);
+                ActiveOpportunities.TryGetValue(opportunity.SellDate, out var activeOpportunitiesOnSellDate);
+                if (activeOpportunitiesOnSellDate == null)
+                {
+                    activeOpportunitiesOnSellDate = [opportunity];
+                    ActiveOpportunities[opportunity.SellDate] = activeOpportunitiesOnSellDate;
+                }
+                else
+                {
+                    activeOpportunitiesOnSellDate!.Add(opportunity);
+                }
+
+
                 Logger.Log($"Bought {opportunity.Listing.Ticker} for {amountToBuy} shares at price {systemContext.GetPriceOnDay(opportunity.Listing)} with cash {remainingCash}");
             }
 
